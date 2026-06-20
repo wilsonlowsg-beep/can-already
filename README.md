@@ -8,6 +8,7 @@ It helps users estimate:
 - Can upgrade from HDB to condo already?
 - Am I CPF-ready?
 - Can sleep well already?
+- Invest already?
 
 The app is client-only and stores user inputs in `localStorage`. There is no backend.
 
@@ -27,6 +28,10 @@ Open the local URL shown by Vite, usually `http://localhost:5173`.
 ```bash
 npm run build
 ```
+
+## CPF LIFE
+
+CPF LIFE is included as an editable monthly payout assumption. Use CPF's official Monthly Payout Estimator for actual payout figures.
 
 ## Important disclaimer
 

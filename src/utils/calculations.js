@@ -37,6 +37,30 @@ export function yearsAssetsLast(startAssets, annualSpending, annualReturn, infla
   return 80;
 }
 
+export function yearsAssetsLastWithIncome(
+  startAssets,
+  annualSpending,
+  annualReturn,
+  inflation,
+  yearlyIncome,
+  incomeEscalation = 0,
+) {
+  if (annualSpending <= 0) return 99;
+  let assets = startAssets;
+  let spending = annualSpending;
+  let income = yearlyIncome;
+
+  for (let year = 1; year <= 80; year += 1) {
+    assets *= 1 + annualReturn / 100;
+    assets -= Math.max(0, spending - income);
+    if (assets <= 0) return year;
+    spending *= 1 + inflation / 100;
+    income *= 1 + incomeEscalation / 100;
+  }
+
+  return 80;
+}
+
 export function getStatus(score) {
   if (score >= 75) return 'green';
   if (score >= 50) return 'amber';
@@ -68,7 +92,19 @@ export function calculateReadiness(inputs, assumptions) {
     projectValue(inputs.cpfSA + inputs.cpfMA + inputs.cpfRA, 4, yearsToRetirement);
   const retirementPool = projectedInvestments + projectedCPF;
   const neededYears = Math.max(1, assumptions.lifeExpectancy - assumptions.retirementAge);
-  const drawdownYears = yearsAssetsLast(
+  const cpfLifeAnnualPayout = assumptions.cpfLifeMonthlyPayout * 12;
+  const cpfLifeDelayYears = Math.max(0, assumptions.cpfLifeStartAge - assumptions.retirementAge);
+  const bridgeCost = cpfLifeDelayYears * futureAnnualSpending;
+  const poolAfterCpfLifeBridge = Math.max(0, retirementPool - bridgeCost);
+  const drawdownYears = yearsAssetsLastWithIncome(
+    poolAfterCpfLifeBridge,
+    futureAnnualSpending,
+    assumptions.expectedReturn,
+    assumptions.inflation,
+    cpfLifeAnnualPayout,
+    assumptions.cpfLifeEscalation,
+  ) + cpfLifeDelayYears;
+  const drawdownYearsWithoutCpfLife = yearsAssetsLast(
     retirementPool,
     futureAnnualSpending,
     assumptions.expectedReturn,
@@ -121,7 +157,11 @@ export function calculateReadiness(inputs, assumptions) {
     yearsToRetirement,
     futureAnnualSpending,
     retirementPool,
+    cpfLifeAnnualPayout,
+    cpfLifeDelayYears,
+    bridgeCost,
     drawdownYears,
+    drawdownYearsWithoutCpfLife,
     neededYears,
     retirementScore: Math.round(retirementScore),
     cpfScore: Math.round(cpfScore),
@@ -166,13 +206,17 @@ export function calculateInvestmentScenario(inputs, assumptions, baseResults) {
     inputs.stiAllocation,
     inputs.tbillsAllocation,
   );
-  const adjustedRetirementPool = baseResults.retirementPool + projectedMonthlyInvesting;
-  const adjustedDrawdownYears = yearsAssetsLast(
-    adjustedRetirementPool,
-    baseResults.futureAnnualSpending,
-    weightedReturn,
-    assumptions.inflation,
-  );
+  const adjustedRetirementPool =
+    Math.max(0, baseResults.retirementPool + projectedMonthlyInvesting - baseResults.bridgeCost);
+  const adjustedDrawdownYears =
+    yearsAssetsLastWithIncome(
+      adjustedRetirementPool,
+      baseResults.futureAnnualSpending,
+      weightedReturn,
+      assumptions.inflation,
+      baseResults.cpfLifeAnnualPayout,
+      assumptions.cpfLifeEscalation,
+    ) + baseResults.cpfLifeDelayYears;
   const adjustedRetirementScore = clamp((adjustedDrawdownYears / baseResults.neededYears) * 100);
 
   return {

@@ -48,6 +48,22 @@ export default function AssumptionForm({ assumptions, setAssumptions }) {
           onChange={(value) => update('lifeExpectancy', value)}
         />
         <Field
+          label="CPF LIFE start age"
+          value={assumptions.cpfLifeStartAge}
+          onChange={(value) => update('cpfLifeStartAge', value)}
+        />
+        <Field
+          label="CPF LIFE monthly payout"
+          value={assumptions.cpfLifeMonthlyPayout}
+          onChange={(value) => update('cpfLifeMonthlyPayout', value)}
+        />
+        <Field
+          label="CPF LIFE yearly increase"
+          value={assumptions.cpfLifeEscalation}
+          onChange={(value) => update('cpfLifeEscalation', value)}
+          suffix="%"
+        />
+        <Field
           label="Mortgage rate"
           value={assumptions.mortgageRate}
           onChange={(value) => update('mortgageRate', value)}

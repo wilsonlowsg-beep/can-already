@@ -111,12 +111,15 @@ function RetirementEngine({ inputs, results, assumptions, setAssumptions }) {
         <div className="metric-grid">
           <Metric label="Projected pool at retirement" value={currency(results.retirementPool)} />
           <Metric label="Future yearly spending" value={currency(results.futureAnnualSpending)} />
+          <Metric label="CPF LIFE yearly payout" value={currency(results.cpfLifeAnnualPayout)} />
           <Metric label="Years money may last" value={`${number(results.drawdownYears)} years`} />
+          <Metric label="Without CPF LIFE" value={`${number(results.drawdownYearsWithoutCpfLife)} years`} />
           <Metric label="Target years" value={`${number(results.neededYears)} years`} />
         </div>
         <PlainEnglishList
           items={[
             `You have about ${number(results.yearsToRetirement)} years to retirement age ${assumptions.retirementAge}.`,
+            `CPF LIFE payout is assumed to start at age ${assumptions.cpfLifeStartAge} with ${currency(assumptions.cpfLifeMonthlyPayout)} per month.`,
             `The model grows cash and investments at ${assumptions.expectedReturn}% and spending at ${assumptions.inflation}%.`,
             status === 'green'
               ? 'Looks comfortable on this simple estimate.'
@@ -148,11 +151,13 @@ function CPFEngine({ inputs, results, assumptions, setAssumptions }) {
           <Metric label="SA + RA checked" value={currency(retirementBase)} />
           <Metric label="MA" value={currency(inputs.cpfMA)} />
           <Metric label="CPF total" value={currency(results.cpfTotal)} />
+          <Metric label="CPF LIFE payout used" value={`${currency(assumptions.cpfLifeMonthlyPayout)} / mth`} />
         </div>
         <PlainEnglishList
           items={[
             `OA interest assumption: 2.5%. SA, MA, and RA interest assumption: 4.0%.`,
             `Full Retirement Sum setting is ${currency(assumptions.fullRetirementSum)}.`,
+            `CPF LIFE is modelled as lifetime monthly income from age ${assumptions.cpfLifeStartAge}. Use CPF's official estimator for actual payout figures.`,
             'This is not an official CPF projection and does not include every CPF rule.',
           ]}
         />
@@ -405,6 +410,7 @@ function AssumptionsPage({ assumptions, setAssumptions }) {
         <PlainEnglishList
           items={[
             'Retirement uses a simple drawdown model. It is not a full financial plan.',
+            'CPF LIFE is included as an editable monthly payout assumption, not an official quote.',
             'CPF sums are editable because official numbers can change over time.',
             'Property affordability uses estimated mortgage payment and flags housing cost above 35% of income.',
             'This is an educational estimate, not financial advice.',
