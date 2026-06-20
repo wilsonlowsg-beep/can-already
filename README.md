@@ -6,7 +6,7 @@ It helps users estimate:
 
 - Can retire already?
 - Can sleep well already?
-- Can buy or upgrade home?
+- Can invest already?
 
 The app is client-only and stores user inputs in `localStorage`. There is no backend.
 
@@ -33,4 +33,4 @@ CPF LIFE is included as an editable monthly payout assumption. Use CPF's officia
 
 ## Important disclaimer
 
-This is an educational estimate, not financial advice. CPF and property rules change, and users should confirm details with official sources or a qualified adviser before making decisions.
+This is an educational estimate, not financial advice. CPF rules and market returns change, and users should confirm details with official sources or a qualified adviser before making decisions.

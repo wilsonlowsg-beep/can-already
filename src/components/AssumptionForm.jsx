@@ -63,18 +63,6 @@ export default function AssumptionForm({ assumptions, setAssumptions }) {
           onChange={(value) => update('cpfLifeEscalation', value)}
           suffix="%"
         />
-        <Field
-          label="Mortgage rate"
-          value={assumptions.mortgageRate}
-          onChange={(value) => update('mortgageRate', value)}
-          suffix="%"
-        />
-        <Field
-          label="Mortgage tenure"
-          value={assumptions.mortgageTenure}
-          onChange={(value) => update('mortgageTenure', value)}
-          suffix="yrs"
-        />
       </div>
     </section>
   );

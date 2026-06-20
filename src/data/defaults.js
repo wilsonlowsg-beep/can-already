@@ -8,11 +8,7 @@ export const DEFAULT_INPUTS = {
   cpfRA: 0,
   cash: 80000,
   investments: 220000,
-  propertyValue: 620000,
-  outstandingLoan: 260000,
-  cpfUsedForHousing: 140000,
-  currentHomeType: 'HDB',
-  targetPropertyPrice: 1350000,
+  monthlyInvestment: 1200,
 };
 
 export const DEFAULT_ASSUMPTIONS = {
@@ -26,8 +22,4 @@ export const DEFAULT_ASSUMPTIONS = {
   cpfLifeStartAge: 65,
   cpfLifeMonthlyPayout: 1650,
   cpfLifeEscalation: 0,
-  mortgageRate: 4,
-  mortgageTenure: 25,
 };
-
-export const HOME_TYPES = ['HDB', 'Condo', 'Landed', 'Living with family'];

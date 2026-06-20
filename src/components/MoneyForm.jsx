@@ -1,5 +1,4 @@
 import Field from './Field';
-import { HOME_TYPES } from '../data/defaults';
 
 export default function MoneyForm({ inputs, setInputs }) {
   const update = (key, value) => setInputs((current) => ({ ...current, [key]: value }));
@@ -33,30 +32,9 @@ export default function MoneyForm({ inputs, setInputs }) {
           onChange={(value) => update('investments', value)}
         />
         <Field
-          label="Property value"
-          value={inputs.propertyValue}
-          onChange={(value) => update('propertyValue', value)}
-        />
-        <Field
-          label="Outstanding loan"
-          value={inputs.outstandingLoan}
-          onChange={(value) => update('outstandingLoan', value)}
-        />
-        <Field
-          label="CPF used for housing"
-          value={inputs.cpfUsedForHousing}
-          onChange={(value) => update('cpfUsedForHousing', value)}
-        />
-        <Field
-          label="Current home type"
-          value={inputs.currentHomeType}
-          onChange={(value) => update('currentHomeType', value)}
-          options={HOME_TYPES}
-        />
-        <Field
-          label="Target property price"
-          value={inputs.targetPropertyPrice}
-          onChange={(value) => update('targetPropertyPrice', value)}
+          label="Monthly investment"
+          value={inputs.monthlyInvestment}
+          onChange={(value) => update('monthlyInvestment', value)}
         />
       </div>
     </section>

@@ -1,5 +1,11 @@
 export default function Field({ label, value, onChange, type = 'number', options, suffix }) {
   const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const isNumber = type === 'number';
+  const displayValue = isNumber && Number(value) === 0 ? '' : value;
+  const handleNumberChange = (event) => {
+    const cleaned = event.target.value.replace(/[^\d.]/g, '').replace(/^0+(?=\d)/, '');
+    onChange(cleaned === '' ? 0 : Number(cleaned));
+  };
 
   return (
     <label className="field" htmlFor={id}>
@@ -16,12 +22,13 @@ export default function Field({ label, value, onChange, type = 'number', options
         ) : (
           <input
             id={id}
-            type={type}
+            type={isNumber ? 'text' : type}
             min="0"
             inputMode="decimal"
-            value={value}
+            placeholder={isNumber ? '0' : undefined}
+            value={displayValue}
             onFocus={(event) => event.target.select()}
-            onChange={(event) => onChange(Number(event.target.value))}
+            onChange={isNumber ? handleNumberChange : (event) => onChange(event.target.value)}
           />
         )}
         {suffix ? <small>{suffix}</small> : null}

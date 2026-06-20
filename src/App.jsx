@@ -1,8 +1,8 @@
 import {
   Banknote,
-  Building2,
   HeartPulse,
   Home,
+  LineChart,
   Moon,
   RotateCcw,
   ShieldCheck,
@@ -21,7 +21,7 @@ import { currency, number, percent } from './utils/format';
 const pages = [
   { id: 'dashboard', label: 'Start', icon: Home },
   { id: 'retirement', label: 'Retire', icon: Moon },
-  { id: 'property', label: 'Home', icon: Building2 },
+  { id: 'investment', label: 'Invest', icon: LineChart },
   { id: 'sleep', label: 'Sleep', icon: HeartPulse },
 ];
 
@@ -57,11 +57,11 @@ function Dashboard({ inputs, results, setInputs, resetAll }) {
         <ScoreCard title="Can retire already?" score={results.retirementScore}>
           Includes your CPF LIFE payout assumption and current savings.
         </ScoreCard>
-        <ScoreCard title="Can buy or upgrade home?" score={results.propertyScore}>
-          Estimated new mortgage is {percent(results.housingRatio)} of monthly income.
+        <ScoreCard title="Can invest already?" score={results.investmentScore}>
+          You plan to invest {percent(results.investRatio)} of monthly income.
         </ScoreCard>
         <ScoreCard title="Can sleep well already?" score={results.cashflowScore}>
-          After the upgrade, estimated monthly surplus is {currency(results.monthlySurplus)}.
+          After spending and investing, estimated monthly surplus is {currency(results.monthlySurplus)}.
         </ScoreCard>
       </section>
 
@@ -123,37 +123,39 @@ function RetirementEngine({ inputs, results, assumptions, setAssumptions }) {
   );
 }
 
-function PropertyEngine({ results, assumptions, setAssumptions }) {
-  const status = getStatus(results.propertyScore);
-  const ratioHigh = results.housingRatio > 35;
+function InvestmentEngine({ inputs, results, assumptions, setAssumptions }) {
+  const status = getStatus(results.investmentScore);
+  const surplusGood = results.monthlySurplus >= 0;
 
   return (
     <>
       <section className="engine-head">
         <div>
-          <p className="eyebrow">Property Engine</p>
-          <h1>Can buy or upgrade home?</h1>
+          <p className="eyebrow">Investment Check</p>
+          <h1>Can invest already?</h1>
         </div>
         <StatusPill status={status} />
       </section>
       <section className="panel">
         <div className="metric-grid">
-          <Metric label="Cash from sale after loan and CPF used" value={currency(results.saleProceedsBeforeCosts)} />
-          <Metric label="Estimated new loan" value={currency(results.targetLoan)} />
-          <Metric label="Stress-tested mortgage" value={currency(results.upgradeMortgage)} />
+          <Metric label="Monthly investment" value={currency(inputs.monthlyInvestment)} />
+          <Metric label="Investment vs income" value={percent(results.investRatio)} />
+          <Metric label="Projected by retirement" value={currency(results.projectedInvestmentValue)} />
           <Metric
-            label="Housing cost vs income"
-            value={percent(results.housingRatio)}
-            tone={ratioHigh ? 'danger' : 'good'}
+            label="Monthly surplus"
+            value={currency(results.monthlySurplus)}
+            tone={surplusGood ? 'good' : 'danger'}
           />
         </div>
         <PlainEnglishList
           items={[
-            ratioHigh
-              ? 'Housing cost is above 35% of monthly income. This may feel tight.'
-              : 'Housing cost is within the 35% comfort line used by this app.',
-            `Upgrade impact: retirement score could shift from ${results.retirementScore} to ${results.retirementImpact}.`,
-            'Buyer stamp duty, agent fees, renovation, and CPF refund interest are not fully modelled in this MVP.',
+            surplusGood
+              ? 'This investing amount still leaves monthly breathing room.'
+              : 'This investing amount may be too high for your current cashflow.',
+            results.emergencyMonths >= 6
+              ? 'Your cash buffer looks okay before investing.'
+              : 'Build a stronger cash buffer before investing too aggressively.',
+            `Projected using the editable ${assumptions.expectedReturn}% yearly return assumption.`,
           ]}
         />
       </section>
@@ -180,7 +182,7 @@ function SleepWellEngine({ inputs, results }) {
           <Metric label="Monthly income" value={currency(inputs.monthlyIncome)} />
           <Metric label="Monthly spending" value={currency(inputs.monthlySpending)} />
           <Metric
-            label="After home upgrade"
+            label="After investing"
             value={currency(results.monthlySurplus)}
             tone={surplusGood ? 'good' : 'danger'}
           />
@@ -190,7 +192,7 @@ function SleepWellEngine({ inputs, results }) {
           items={[
             surplusGood
               ? 'Your monthly cashflow still has breathing room in this estimate.'
-              : 'Your monthly cashflow may be negative after the home upgrade.',
+              : 'Your monthly cashflow may be negative after spending and investing.',
             results.emergencyMonths >= 6
               ? 'Your cash buffer is at least six months of spending.'
               : 'Try to build at least six months of cash buffer before taking big risks.',
@@ -218,7 +220,7 @@ function AssumptionsPage({ assumptions, setAssumptions }) {
             'Retirement uses a simple drawdown model. It is not a full financial plan.',
             'CPF LIFE and investment returns are included as editable assumptions, not official quotes or predictions.',
             'CPF sums are editable because official numbers can change over time.',
-            'Property affordability uses estimated mortgage payment and flags housing cost above 35% of income.',
+            'Investment readiness checks monthly investing against cashflow and cash buffer.',
             'This is an educational estimate, not financial advice.',
           ]}
         />
@@ -266,8 +268,13 @@ export default function App() {
             setAssumptions={setAssumptions}
           />
         )}
-        {activePage === 'property' && (
-          <PropertyEngine results={results} assumptions={assumptions} setAssumptions={setAssumptions} />
+        {activePage === 'investment' && (
+          <InvestmentEngine
+            inputs={inputs}
+            results={results}
+            assumptions={assumptions}
+            setAssumptions={setAssumptions}
+          />
         )}
         {activePage === 'sleep' && (
           <SleepWellEngine inputs={inputs} results={results} />
