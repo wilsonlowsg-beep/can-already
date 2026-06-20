@@ -1,11 +1,8 @@
 import {
   Banknote,
   Building2,
-  Calculator,
   HeartPulse,
   Home,
-  Landmark,
-  LineChart,
   Moon,
   RotateCcw,
   ShieldCheck,
@@ -18,16 +15,14 @@ import ScoreCard from './components/ScoreCard';
 import StatusPill from './components/StatusPill';
 import { DEFAULT_ASSUMPTIONS, DEFAULT_INPUTS } from './data/defaults';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { calculateInvestmentScenario, calculateReadiness, getStatus } from './utils/calculations';
+import { calculateReadiness, getStatus } from './utils/calculations';
 import { currency, number, percent } from './utils/format';
 
 const pages = [
-  { id: 'dashboard', label: 'Dashboard', icon: Home },
-  { id: 'retirement', label: 'Retirement', icon: Moon },
-  { id: 'cpf', label: 'CPF', icon: Landmark },
-  { id: 'property', label: 'Property', icon: Building2 },
-  { id: 'invest', label: 'Invest', icon: LineChart },
-  { id: 'scenario', label: 'Scenario', icon: Calculator },
+  { id: 'dashboard', label: 'Start', icon: Home },
+  { id: 'retirement', label: 'Retire', icon: Moon },
+  { id: 'property', label: 'Home', icon: Building2 },
+  { id: 'sleep', label: 'Sleep', icon: HeartPulse },
 ];
 
 function PlainEnglishList({ items }) {
@@ -48,8 +43,7 @@ function Dashboard({ inputs, results, setInputs, resetAll }) {
           <p className="eyebrow">Singapore money check</p>
           <h1>Can Already?</h1>
           <p>
-            A quick heartland-style estimate for retirement, CPF, condo upgrade, and whether the
-            monthly budget can still breathe.
+            Answer three simple money questions first. No jargon, no spreadsheet feeling.
           </p>
         </div>
         <div className={`verdict ${results.overallStatus}`}>
@@ -61,12 +55,9 @@ function Dashboard({ inputs, results, setInputs, resetAll }) {
 
       <section className="score-grid">
         <ScoreCard title="Can retire already?" score={results.retirementScore}>
-          Your money may last about {number(results.drawdownYears)} years from retirement.
+          Includes your CPF LIFE payout assumption and current savings.
         </ScoreCard>
-        <ScoreCard title="Am I CPF-ready?" score={results.cpfScore}>
-          CPF balances are compared with your editable retirement sums.
-        </ScoreCard>
-        <ScoreCard title="Can upgrade already?" score={results.propertyScore}>
+        <ScoreCard title="Can buy or upgrade home?" score={results.propertyScore}>
           Estimated new mortgage is {percent(results.housingRatio)} of monthly income.
         </ScoreCard>
         <ScoreCard title="Can sleep well already?" score={results.cashflowScore}>
@@ -81,9 +72,9 @@ function Dashboard({ inputs, results, setInputs, resetAll }) {
         </div>
         <div className="metric-grid">
           <Metric label="Net worth estimate" value={currency(results.totalNetWorth)} />
-          <Metric label="Liquid assets" value={currency(results.liquidAssets)} />
-          <Metric label="CPF total" value={currency(results.cpfTotal)} />
-          <Metric label="Property equity" value={currency(results.propertyEquity)} />
+          <Metric label="Monthly income" value={currency(inputs.monthlyIncome)} />
+          <Metric label="Monthly spending" value={currency(inputs.monthlySpending)} />
+          <Metric label="Cash buffer" value={currency(inputs.cash)} />
         </div>
         <button className="ghost-button" type="button" onClick={resetAll}>
           <RotateCcw size={16} aria-hidden="true" />
@@ -132,41 +123,6 @@ function RetirementEngine({ inputs, results, assumptions, setAssumptions }) {
   );
 }
 
-function CPFEngine({ inputs, results, assumptions, setAssumptions }) {
-  const status = getStatus(results.cpfScore);
-  const retirementBase = inputs.cpfRA > 0 ? inputs.cpfRA : inputs.cpfSA + inputs.cpfRA;
-
-  return (
-    <>
-      <section className="engine-head">
-        <div>
-          <p className="eyebrow">CPF Engine</p>
-          <h1>Am I CPF-ready?</h1>
-        </div>
-        <StatusPill status={status} />
-      </section>
-      <section className="panel">
-        <div className="metric-grid">
-          <Metric label="OA" value={currency(inputs.cpfOA)} />
-          <Metric label="SA + RA checked" value={currency(retirementBase)} />
-          <Metric label="MA" value={currency(inputs.cpfMA)} />
-          <Metric label="CPF total" value={currency(results.cpfTotal)} />
-          <Metric label="CPF LIFE payout used" value={`${currency(assumptions.cpfLifeMonthlyPayout)} / mth`} />
-        </div>
-        <PlainEnglishList
-          items={[
-            `OA interest assumption: 2.5%. SA, MA, and RA interest assumption: 4.0%.`,
-            `Full Retirement Sum setting is ${currency(assumptions.fullRetirementSum)}.`,
-            `CPF LIFE is modelled as lifetime monthly income from age ${assumptions.cpfLifeStartAge}. Use CPF's official estimator for actual payout figures.`,
-            'This is not an official CPF projection and does not include every CPF rule.',
-          ]}
-        />
-      </section>
-      <AssumptionForm assumptions={assumptions} setAssumptions={setAssumptions} />
-    </>
-  );
-}
-
 function PropertyEngine({ results, assumptions, setAssumptions }) {
   const status = getStatus(results.propertyScore);
   const ratioHigh = results.housingRatio > 35;
@@ -176,7 +132,7 @@ function PropertyEngine({ results, assumptions, setAssumptions }) {
       <section className="engine-head">
         <div>
           <p className="eyebrow">Property Engine</p>
-          <h1>Can upgrade from HDB to condo already?</h1>
+          <h1>Can buy or upgrade home?</h1>
         </div>
         <StatusPill status={status} />
       </section>
@@ -206,197 +162,41 @@ function PropertyEngine({ results, assumptions, setAssumptions }) {
   );
 }
 
-function ScenarioSimulator({ inputs, setInputs, results, assumptions, setAssumptions }) {
-  return (
-    <>
-      <section className="engine-head">
-        <div>
-          <p className="eyebrow">Scenario Simulator</p>
-          <h1>Try a different future</h1>
-        </div>
-        <StatusPill status={results.overallStatus} />
-      </section>
-      <section className="panel scenario">
-        <div className="section-title">
-          <p>Live result</p>
-          <h2>{results.overallScore}/100 overall</h2>
-        </div>
-        <div className="metric-grid">
-          <Metric label="Retirement" value={`${results.retirementScore}/100`} />
-          <Metric label="CPF" value={`${results.cpfScore}/100`} />
-          <Metric label="Property" value={`${results.propertyScore}/100`} />
-          <Metric label="Cashflow" value={`${results.cashflowScore}/100`} />
-        </div>
-      </section>
-      <MoneyForm inputs={inputs} setInputs={setInputs} />
-      <AssumptionForm assumptions={assumptions} setAssumptions={setAssumptions} />
-    </>
-  );
-}
-
-function SliderField({ label, value, onChange, suffix = '%' }) {
-  return (
-    <label className="slider-field">
-      <span>{label}</span>
-      <div>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={value}
-          onChange={(event) => onChange(Number(event.target.value))}
-        />
-        <strong>
-          {value}
-          {suffix}
-        </strong>
-      </div>
-    </label>
-  );
-}
-
-function InvestAlready({ inputs, setInputs, assumptions, setAssumptions, results }) {
-  const investment = calculateInvestmentScenario(inputs, assumptions, results);
-  const allocationOk = Math.round(investment.allocationTotal) === 100;
-  const status = getStatus(investment.adjustedRetirementScore);
-  const updateInput = (key, value) => setInputs((current) => ({ ...current, [key]: value }));
-  const updateAssumption = (key, value) => setAssumptions((current) => ({ ...current, [key]: value }));
+function SleepWellEngine({ inputs, results }) {
+  const status = getStatus(results.cashflowScore);
+  const surplusGood = results.monthlySurplus >= 0;
 
   return (
     <>
       <section className="engine-head">
         <div>
-          <p className="eyebrow">Invest Already</p>
-          <h1>Will investing help?</h1>
+          <p className="eyebrow">Sleep Well Check</p>
+          <h1>Can sleep well already?</h1>
         </div>
         <StatusPill status={status} />
       </section>
-
-      <section className="panel scenario">
-        <div className="section-title">
-          <p>Portfolio estimate</p>
-          <h2>{currency(investment.projectedValue)} after {number(inputs.investmentHorizon)} years</h2>
-        </div>
+      <section className="panel">
         <div className="metric-grid">
-          <Metric label="Monthly investment" value={currency(inputs.monthlyInvestment)} />
-          <Metric label="Weighted return" value={percent(investment.weightedReturn)} />
-          <Metric label="Real value today" value={currency(investment.realValue)} />
-          <Metric label="Retirement score impact" value={`${investment.retirementScoreLift >= 0 ? '+' : ''}${investment.retirementScoreLift}`} />
+          <Metric label="Monthly income" value={currency(inputs.monthlyIncome)} />
+          <Metric label="Monthly spending" value={currency(inputs.monthlySpending)} />
+          <Metric
+            label="After home upgrade"
+            value={currency(results.monthlySurplus)}
+            tone={surplusGood ? 'good' : 'danger'}
+          />
+          <Metric label="Cash buffer" value={`${number(results.emergencyMonths)} months`} />
         </div>
         <PlainEnglishList
           items={[
-            allocationOk
-              ? 'Allocation adds up to 100%. Nice and tidy.'
-              : `Allocation adds up to ${number(investment.allocationTotal)}%. Try to make it 100%.`,
-            investment.concentration > 60
-              ? 'One bucket is above 60%. That may be too concentrated for some people.'
-              : 'No single bucket is above 60% in this simple check.',
-            `Estimated investment gain is ${currency(investment.gainEstimate)} before taxes, fees, and bad timing.`,
-            'Returns are assumptions, not predictions. Markets can go down for years.',
+            surplusGood
+              ? 'Your monthly cashflow still has breathing room in this estimate.'
+              : 'Your monthly cashflow may be negative after the home upgrade.',
+            results.emergencyMonths >= 6
+              ? 'Your cash buffer is at least six months of spending.'
+              : 'Try to build at least six months of cash buffer before taking big risks.',
+            'This check is about stress, not maximising returns.',
           ]}
         />
-      </section>
-
-      <section className="panel">
-        <div className="section-title">
-          <p>Monthly plan</p>
-          <h2>How much and how long?</h2>
-        </div>
-        <div className="form-grid compact">
-          <label className="field" htmlFor="monthly-investment">
-            <span>Monthly investment</span>
-            <div className="input-wrap">
-              <input
-                id="monthly-investment"
-                min="0"
-                type="number"
-                inputMode="decimal"
-                value={inputs.monthlyInvestment}
-                onFocus={(event) => event.target.select()}
-                onChange={(event) => updateInput('monthlyInvestment', Number(event.target.value))}
-              />
-            </div>
-          </label>
-          <label className="field" htmlFor="investment-horizon">
-            <span>Investment horizon</span>
-            <div className="input-wrap">
-              <input
-                id="investment-horizon"
-                min="0"
-                type="number"
-                inputMode="decimal"
-                value={inputs.investmentHorizon}
-                onFocus={(event) => event.target.select()}
-                onChange={(event) => updateInput('investmentHorizon', Number(event.target.value))}
-              />
-              <small>yrs</small>
-            </div>
-          </label>
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="section-title">
-          <p>Allocation</p>
-          <h2>Where the monthly money goes</h2>
-        </div>
-        <div className="allocation-total">
-          <span>Total</span>
-          <strong className={allocationOk ? 'ok' : 'warn'}>{number(investment.allocationTotal)}%</strong>
-        </div>
-        <div className="slider-grid">
-          <SliderField
-            label="S&P 500"
-            value={inputs.sp500Allocation}
-            onChange={(value) => updateInput('sp500Allocation', value)}
-          />
-          <SliderField
-            label="SG banks"
-            value={inputs.sgBanksAllocation}
-            onChange={(value) => updateInput('sgBanksAllocation', value)}
-          />
-          <SliderField
-            label="STI ETF"
-            value={inputs.stiAllocation}
-            onChange={(value) => updateInput('stiAllocation', value)}
-          />
-          <SliderField
-            label="T-bills / cash"
-            value={inputs.tbillsAllocation}
-            onChange={(value) => updateInput('tbillsAllocation', value)}
-          />
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="section-title">
-          <p>Return assumptions</p>
-          <h2>Edit, do not blindly believe</h2>
-        </div>
-        <div className="form-grid compact">
-          {[
-            ['S&P 500 return', 'sp500Return'],
-            ['SG banks return', 'sgBanksReturn'],
-            ['STI ETF return', 'stiReturn'],
-            ['T-bills return', 'tbillsReturn'],
-          ].map(([label, key]) => (
-            <label className="field" htmlFor={key} key={key}>
-              <span>{label}</span>
-              <div className="input-wrap">
-                <input
-                  id={key}
-                  min="0"
-                  type="number"
-                  inputMode="decimal"
-                  value={assumptions[key]}
-                  onFocus={(event) => event.target.select()}
-                  onChange={(event) => updateAssumption(key, Number(event.target.value))}
-                />
-                <small>%</small>
-              </div>
-            </label>
-          ))}
-        </div>
       </section>
     </>
   );
@@ -416,7 +216,7 @@ function AssumptionsPage({ assumptions, setAssumptions }) {
         <PlainEnglishList
           items={[
             'Retirement uses a simple drawdown model. It is not a full financial plan.',
-            'CPF LIFE is included as an editable monthly payout assumption, not an official quote.',
+            'CPF LIFE and investment returns are included as editable assumptions, not official quotes or predictions.',
             'CPF sums are editable because official numbers can change over time.',
             'Property affordability uses estimated mortgage payment and flags housing cost above 35% of income.',
             'This is an educational estimate, not financial advice.',
@@ -466,34 +266,11 @@ export default function App() {
             setAssumptions={setAssumptions}
           />
         )}
-        {activePage === 'cpf' && (
-          <CPFEngine
-            inputs={inputs}
-            results={results}
-            assumptions={assumptions}
-            setAssumptions={setAssumptions}
-          />
-        )}
         {activePage === 'property' && (
           <PropertyEngine results={results} assumptions={assumptions} setAssumptions={setAssumptions} />
         )}
-        {activePage === 'invest' && (
-          <InvestAlready
-            inputs={inputs}
-            setInputs={setInputs}
-            assumptions={assumptions}
-            setAssumptions={setAssumptions}
-            results={results}
-          />
-        )}
-        {activePage === 'scenario' && (
-          <ScenarioSimulator
-            inputs={inputs}
-            setInputs={setInputs}
-            results={results}
-            assumptions={assumptions}
-            setAssumptions={setAssumptions}
-          />
+        {activePage === 'sleep' && (
+          <SleepWellEngine inputs={inputs} results={results} />
         )}
         {activePage === 'assumptions' && (
           <AssumptionsPage assumptions={assumptions} setAssumptions={setAssumptions} />

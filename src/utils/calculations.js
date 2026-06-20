@@ -13,15 +13,6 @@ export function projectValue(principal, annualRate, years) {
   return principal * (1 + annualRate / 100) ** Math.max(0, years);
 }
 
-export function projectMonthlyInvestment(monthlyAmount, annualRate, years) {
-  if (monthlyAmount <= 0 || years <= 0) return 0;
-  const months = Math.max(1, years * 12);
-  const monthlyRate = annualRate / 100 / 12;
-
-  if (monthlyRate === 0) return monthlyAmount * months;
-  return monthlyAmount * (((1 + monthlyRate) ** months - 1) / monthlyRate);
-}
-
 export function yearsAssetsLast(startAssets, annualSpending, annualReturn, inflation) {
   if (annualSpending <= 0) return 99;
   let assets = startAssets;
@@ -176,59 +167,5 @@ export function calculateReadiness(inputs, assumptions) {
     monthlySurplus,
     emergencyMonths,
     retirementImpact: Math.round(retirementImpact),
-  };
-}
-
-export function calculateInvestmentScenario(inputs, assumptions, baseResults) {
-  const allocationTotal =
-    inputs.sp500Allocation + inputs.sgBanksAllocation + inputs.stiAllocation + inputs.tbillsAllocation;
-  const normalizedTotal = allocationTotal > 0 ? allocationTotal : 1;
-  const weightedReturn =
-    (inputs.sp500Allocation * assumptions.sp500Return +
-      inputs.sgBanksAllocation * assumptions.sgBanksReturn +
-      inputs.stiAllocation * assumptions.stiReturn +
-      inputs.tbillsAllocation * assumptions.tbillsReturn) /
-    normalizedTotal;
-  const horizon = Math.max(0, inputs.investmentHorizon);
-  const futureContributions = inputs.monthlyInvestment * 12 * horizon;
-  const projectedMonthlyInvesting = projectMonthlyInvestment(
-    inputs.monthlyInvestment,
-    weightedReturn,
-    horizon,
-  );
-  const currentPortfolioGrowth = projectValue(inputs.investments, weightedReturn, horizon);
-  const projectedValue = currentPortfolioGrowth + projectedMonthlyInvesting;
-  const realValue = projectedValue / (1 + assumptions.inflation / 100) ** horizon;
-  const gainEstimate = projectedValue - inputs.investments - futureContributions;
-  const concentration = Math.max(
-    inputs.sp500Allocation,
-    inputs.sgBanksAllocation,
-    inputs.stiAllocation,
-    inputs.tbillsAllocation,
-  );
-  const adjustedRetirementPool =
-    Math.max(0, baseResults.retirementPool + projectedMonthlyInvesting - baseResults.bridgeCost);
-  const adjustedDrawdownYears =
-    yearsAssetsLastWithIncome(
-      adjustedRetirementPool,
-      baseResults.futureAnnualSpending,
-      weightedReturn,
-      assumptions.inflation,
-      baseResults.cpfLifeAnnualPayout,
-      assumptions.cpfLifeEscalation,
-    ) + baseResults.cpfLifeDelayYears;
-  const adjustedRetirementScore = clamp((adjustedDrawdownYears / baseResults.neededYears) * 100);
-
-  return {
-    allocationTotal,
-    weightedReturn,
-    futureContributions,
-    projectedValue,
-    realValue,
-    gainEstimate,
-    concentration,
-    adjustedDrawdownYears,
-    adjustedRetirementScore: Math.round(adjustedRetirementScore),
-    retirementScoreLift: Math.round(adjustedRetirementScore - baseResults.retirementScore),
   };
 }

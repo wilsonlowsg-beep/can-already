@@ -5,10 +5,8 @@ A mobile-first React + Vite MVP for Singapore financial readiness.
 It helps users estimate:
 
 - Can retire already?
-- Can upgrade from HDB to condo already?
-- Am I CPF-ready?
 - Can sleep well already?
-- Invest already?
+- Can buy or upgrade home?
 
 The app is client-only and stores user inputs in `localStorage`. There is no backend.
 

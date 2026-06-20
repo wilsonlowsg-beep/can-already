@@ -13,12 +13,6 @@ export const DEFAULT_INPUTS = {
   cpfUsedForHousing: 140000,
   currentHomeType: 'HDB',
   targetPropertyPrice: 1350000,
-  monthlyInvestment: 1200,
-  investmentHorizon: 20,
-  sp500Allocation: 45,
-  sgBanksAllocation: 25,
-  stiAllocation: 15,
-  tbillsAllocation: 15,
 };
 
 export const DEFAULT_ASSUMPTIONS = {
@@ -34,10 +28,6 @@ export const DEFAULT_ASSUMPTIONS = {
   cpfLifeEscalation: 0,
   mortgageRate: 4,
   mortgageTenure: 25,
-  sp500Return: 7,
-  sgBanksReturn: 5,
-  stiReturn: 4.5,
-  tbillsReturn: 3,
 };
 
 export const HOME_TYPES = ['HDB', 'Condo', 'Landed', 'Living with family'];
