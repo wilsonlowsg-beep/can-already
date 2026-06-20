@@ -18,7 +18,9 @@ export default function Field({ label, value, onChange, type = 'number', options
             id={id}
             type={type}
             min="0"
+            inputMode="decimal"
             value={value}
+            onFocus={(event) => event.target.select()}
             onChange={(event) => onChange(Number(event.target.value))}
           />
         )}

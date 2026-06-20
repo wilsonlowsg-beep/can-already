@@ -310,7 +310,9 @@ function InvestAlready({ inputs, setInputs, assumptions, setAssumptions, results
                 id="monthly-investment"
                 min="0"
                 type="number"
+                inputMode="decimal"
                 value={inputs.monthlyInvestment}
+                onFocus={(event) => event.target.select()}
                 onChange={(event) => updateInput('monthlyInvestment', Number(event.target.value))}
               />
             </div>
@@ -322,7 +324,9 @@ function InvestAlready({ inputs, setInputs, assumptions, setAssumptions, results
                 id="investment-horizon"
                 min="0"
                 type="number"
+                inputMode="decimal"
                 value={inputs.investmentHorizon}
+                onFocus={(event) => event.target.select()}
                 onChange={(event) => updateInput('investmentHorizon', Number(event.target.value))}
               />
               <small>yrs</small>
@@ -383,7 +387,9 @@ function InvestAlready({ inputs, setInputs, assumptions, setAssumptions, results
                   id={key}
                   min="0"
                   type="number"
+                  inputMode="decimal"
                   value={assumptions[key]}
+                  onFocus={(event) => event.target.select()}
                   onChange={(event) => updateAssumption(key, Number(event.target.value))}
                 />
                 <small>%</small>
