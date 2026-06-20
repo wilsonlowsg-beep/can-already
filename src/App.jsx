@@ -5,6 +5,7 @@ import {
   HeartPulse,
   Home,
   Landmark,
+  LineChart,
   Moon,
   RotateCcw,
   ShieldCheck,
@@ -17,7 +18,7 @@ import ScoreCard from './components/ScoreCard';
 import StatusPill from './components/StatusPill';
 import { DEFAULT_ASSUMPTIONS, DEFAULT_INPUTS } from './data/defaults';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { calculateReadiness, getStatus } from './utils/calculations';
+import { calculateInvestmentScenario, calculateReadiness, getStatus } from './utils/calculations';
 import { currency, number, percent } from './utils/format';
 
 const pages = [
@@ -25,6 +26,7 @@ const pages = [
   { id: 'retirement', label: 'Retirement', icon: Moon },
   { id: 'cpf', label: 'CPF', icon: Landmark },
   { id: 'property', label: 'Property', icon: Building2 },
+  { id: 'invest', label: 'Invest', icon: LineChart },
   { id: 'scenario', label: 'Scenario', icon: Calculator },
 ];
 
@@ -227,6 +229,168 @@ function ScenarioSimulator({ inputs, setInputs, results, assumptions, setAssumpt
   );
 }
 
+function SliderField({ label, value, onChange, suffix = '%' }) {
+  return (
+    <label className="slider-field">
+      <span>{label}</span>
+      <div>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={value}
+          onChange={(event) => onChange(Number(event.target.value))}
+        />
+        <strong>
+          {value}
+          {suffix}
+        </strong>
+      </div>
+    </label>
+  );
+}
+
+function InvestAlready({ inputs, setInputs, assumptions, setAssumptions, results }) {
+  const investment = calculateInvestmentScenario(inputs, assumptions, results);
+  const allocationOk = Math.round(investment.allocationTotal) === 100;
+  const status = getStatus(investment.adjustedRetirementScore);
+  const updateInput = (key, value) => setInputs((current) => ({ ...current, [key]: value }));
+  const updateAssumption = (key, value) => setAssumptions((current) => ({ ...current, [key]: value }));
+
+  return (
+    <>
+      <section className="engine-head">
+        <div>
+          <p className="eyebrow">Invest Already</p>
+          <h1>Will investing help?</h1>
+        </div>
+        <StatusPill status={status} />
+      </section>
+
+      <section className="panel scenario">
+        <div className="section-title">
+          <p>Portfolio estimate</p>
+          <h2>{currency(investment.projectedValue)} after {number(inputs.investmentHorizon)} years</h2>
+        </div>
+        <div className="metric-grid">
+          <Metric label="Monthly investment" value={currency(inputs.monthlyInvestment)} />
+          <Metric label="Weighted return" value={percent(investment.weightedReturn)} />
+          <Metric label="Real value today" value={currency(investment.realValue)} />
+          <Metric label="Retirement score impact" value={`${investment.retirementScoreLift >= 0 ? '+' : ''}${investment.retirementScoreLift}`} />
+        </div>
+        <PlainEnglishList
+          items={[
+            allocationOk
+              ? 'Allocation adds up to 100%. Nice and tidy.'
+              : `Allocation adds up to ${number(investment.allocationTotal)}%. Try to make it 100%.`,
+            investment.concentration > 60
+              ? 'One bucket is above 60%. That may be too concentrated for some people.'
+              : 'No single bucket is above 60% in this simple check.',
+            `Estimated investment gain is ${currency(investment.gainEstimate)} before taxes, fees, and bad timing.`,
+            'Returns are assumptions, not predictions. Markets can go down for years.',
+          ]}
+        />
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <p>Monthly plan</p>
+          <h2>How much and how long?</h2>
+        </div>
+        <div className="form-grid compact">
+          <label className="field" htmlFor="monthly-investment">
+            <span>Monthly investment</span>
+            <div className="input-wrap">
+              <input
+                id="monthly-investment"
+                min="0"
+                type="number"
+                value={inputs.monthlyInvestment}
+                onChange={(event) => updateInput('monthlyInvestment', Number(event.target.value))}
+              />
+            </div>
+          </label>
+          <label className="field" htmlFor="investment-horizon">
+            <span>Investment horizon</span>
+            <div className="input-wrap">
+              <input
+                id="investment-horizon"
+                min="0"
+                type="number"
+                value={inputs.investmentHorizon}
+                onChange={(event) => updateInput('investmentHorizon', Number(event.target.value))}
+              />
+              <small>yrs</small>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <p>Allocation</p>
+          <h2>Where the monthly money goes</h2>
+        </div>
+        <div className="allocation-total">
+          <span>Total</span>
+          <strong className={allocationOk ? 'ok' : 'warn'}>{number(investment.allocationTotal)}%</strong>
+        </div>
+        <div className="slider-grid">
+          <SliderField
+            label="S&P 500"
+            value={inputs.sp500Allocation}
+            onChange={(value) => updateInput('sp500Allocation', value)}
+          />
+          <SliderField
+            label="SG banks"
+            value={inputs.sgBanksAllocation}
+            onChange={(value) => updateInput('sgBanksAllocation', value)}
+          />
+          <SliderField
+            label="STI ETF"
+            value={inputs.stiAllocation}
+            onChange={(value) => updateInput('stiAllocation', value)}
+          />
+          <SliderField
+            label="T-bills / cash"
+            value={inputs.tbillsAllocation}
+            onChange={(value) => updateInput('tbillsAllocation', value)}
+          />
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <p>Return assumptions</p>
+          <h2>Edit, do not blindly believe</h2>
+        </div>
+        <div className="form-grid compact">
+          {[
+            ['S&P 500 return', 'sp500Return'],
+            ['SG banks return', 'sgBanksReturn'],
+            ['STI ETF return', 'stiReturn'],
+            ['T-bills return', 'tbillsReturn'],
+          ].map(([label, key]) => (
+            <label className="field" htmlFor={key} key={key}>
+              <span>{label}</span>
+              <div className="input-wrap">
+                <input
+                  id={key}
+                  min="0"
+                  type="number"
+                  value={assumptions[key]}
+                  onChange={(event) => updateAssumption(key, Number(event.target.value))}
+                />
+                <small>%</small>
+              </div>
+            </label>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
 function AssumptionsPage({ assumptions, setAssumptions }) {
   return (
     <>
@@ -300,6 +464,15 @@ export default function App() {
         )}
         {activePage === 'property' && (
           <PropertyEngine results={results} assumptions={assumptions} setAssumptions={setAssumptions} />
+        )}
+        {activePage === 'invest' && (
+          <InvestAlready
+            inputs={inputs}
+            setInputs={setInputs}
+            assumptions={assumptions}
+            setAssumptions={setAssumptions}
+            results={results}
+          />
         )}
         {activePage === 'scenario' && (
           <ScenarioSimulator
